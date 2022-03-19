@@ -1,113 +1,81 @@
-<p align="center">
-  <a href="https://www.gatsbyjs.com">
-    <img alt="Gatsby" src="https://www.gatsbyjs.com/Gatsby-Monogram.svg" width="60" />
-  </a>
-</p>
-<h1 align="center">
-  Starter for a Gatsby Plugin
-</h1>
+# gatsby-plugin-csp-nonce
 
-A minimal boilerplate for the essential files Gatsby looks for in a plugin.
+## What is a Content Security Policy (CSP)? 
+[Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) is a computer security standard introduced to prevent cross-site scripting (XSS), clickjacking and other data injection attacks. These attacks execute malicious code in the trusted web page context. It is widely supported by modern web browsers as it improves website security.
 
-## 🚀 Quick start
+With a Content Security Policy you simply declare what sources of content are allowed to be loaded from a web page (Like CSS, Javscript, Images, iframes etc.).
 
-To get started creating a new plugin, you can follow these steps:
+### Existing solutions & implications
+To implement a CSP on your Gatsby website, there is a plugin called `gatsby-plugin-csp`. This plugin which relies upon creating hashes and adding those in a `<meta>`-tag. This `<meta>`-tag has limited browser support (Source: [Can I use](https://caniuse.com/mdn-http_headers_csp_content-security-policy_meta-element-support)). Therefore, setting `Content-Security-Policy` in the HTTP headers is the best supported alternative.
 
-1. Initialize a new plugin from the starter with `gatsby new`
+Besides, many rely upon a plugin called `gatsby-plugin-image` (GatsbyImage & StaticImage) for processing images on their Gatsby application. `gatsby-plugin-image` creates inline styles, but `gatsby-plugin-csp` doesn't offer support for that ([Source](https://github.com/bejamas/gatsby-plugin-csp/issues/3)). A resolution might be to use 'unsafe-inline'. Hench the name, it is generally not recommended to use (see for more information: https://content-security-policy.com/unsafe-inline/).
 
-```shell
-gatsby new my-plugin https://github.com/gatsbyjs/gatsby-starter-plugin
+### Solution
+A solution is to use CSP level 3 feature called `strict-dynamic` ([read-more](https://content-security-policy.com/strict-dynamic/)). This will use a [nonce](https://en.wikipedia.org/wiki/Cryptographic_nonce) (randomly generated number), which changes every page request.
+As such, there no need to generate `sha-256` or whitelist hosts anymore.
+
+## What does this plugin do
+
+`gatsby-plugin-csp-nonce` adds a fixed nonce to inline styles and scripts.
+
+Having a fixed nonce on the right placed in your Gatsby code does half the job. The other part is making sure that during a page request this nonce will be replaced by a randomly generated nonce.
+
+Different hosting providers have solutions for this, but it is not in the scope of this plugin;
+- [CloudFlare Worker](https://github.com/moveyourdigital/cloudflare-worker-csp-nonce) (Solution by [Lightningspirit](https://github.com/lightningspirit))
+
+## Install
+
+`npm i gatsby-plugin-csp-nonce`
+
+or
+
+`yarn add gatsby-plugin-csp-nonce`
+
+## How to use
+
+### Step 1: Load the plugin in your Gatsby website
+```javascript
+// In your gatsby-config.js
+module.exports = {
+  plugins: [`gatsby-plugin-csp-nonce`]
+};
 ```
 
-If you already have a Gatsby site, you can use it. Otherwise, you can [create a new Gatsby site](https://www.gatsbyjs.com/tutorial/part-0/#create-a-gatsby-site) to test your plugin.
+This will add the plugin and add `nonce="nonce-DhcnhD3khTMePgXw"` to your scripts and styles. By default the plugin is only visible in production mode (`gatsby build`).
 
-Your directory structure will look similar to this:
-
-```text
-/my-gatsby-site
-├── gatsby-config.js
-└── /src
-    └── /pages
-        └── /index.js
-/my-plugin
-├── gatsby-browser.js
-├── gatsby-node.js
-├── gatsby-ssr.js
-├── index.js
-├── package.json
-└── README.md
-```
-
-With `my-gatsby-site` being your Gatsby site, and `my-plugin` being your plugin. You could also include the plugin in your [site's `plugins` folder](https://www.gatsbyjs.com/docs/loading-plugins-from-your-local-plugins-folder/).
-
-2. Include the plugin in a Gatsby site
-
-Inside of the `gatsby-config.js` file of your site (in this case, `my-gatsby-site`), include the plugin in the `plugins` array:
+To add a custom nonce or to see the nonce in development mode (`gatsby develop`), you can use the settings below.
 
 ```javascript
+// In your gatsby-config.js
 module.exports = {
   plugins: [
-    // other gatsby plugins
-    // ...
-    require.resolve(`../my-plugin`),
-  ],
-}
+    {
+      resolve: `gatsby-plugin-csp-nonce`,
+      options: {
+          disableOnDev: false,
+          nonce: 'my-custom-nonce',
+      },
+    },
+  ]
+};
 ```
 
-The line `require.resolve('../my-plugin')` is what accesses the plugin based on its filepath on your computer, and adds it as a plugin when Gatsby runs.
+### Step 2: Send headers to hosting provider
+Set the `Content-Security-Policy` HTTP header. This can be done by setting them in a custom file (e.g. [CloudFlare](https://developers.cloudflare.com/pages/platform/headers/), [Netlify](https://docs.netlify.com/routing/headers/)), or by setting custom headers using a plugin (e.g. [Gatsby Cloud](https://www.gatsbyjs.com/plugins/gatsby-plugin-gatsby-cloud/?=gatsby%20cloud)).  
 
-_You can use this method to test and develop your plugin before you publish it to a package registry like npm. Once published, you would instead install it and [add the plugin name to the array](https://www.gatsbyjs.com/docs/using-a-plugin-in-your-site/). You can read about other ways to connect your plugin to your site including using `npm link` or `yarn workspaces` in the [doc on creating local plugins](https://www.gatsbyjs.com/docs/creating-a-local-plugin/#developing-a-local-plugin-that-is-outside-your-project)._
+#### Setting headers with a file
+Files placed in the `/static` directory will be copied in the `/public` directory during build time (`Gatbsy build`). Some hosting providers offer support for setting custom headers by placing a 'headers' file in the `/public` directory.
 
-3. Verify the plugin was added correctly
-
-The plugin added by the starter implements a single Gatsby API in the `gatsby-node` that logs a message to the console. When you run `gatsby develop` or `gatsby build` in the site that implements your plugin, you should see this message.
-
-You can verify your plugin was added to your site correctly by running `gatsby develop` for the site.
-
-You should now see a message logged to the console in the preinit phase of the Gatsby build process:
-
-```shell
-$ gatsby develop
-success open and validate gatsby-configs - 0.033s
-success load plugins - 0.074s
-Loaded gatsby-starter-plugin
-success onPreInit - 0.016s
-...
-```
-
-4. Rename the plugin in the `package.json`
-
-When you clone the site, the information in the `package.json` will need to be updated. Name your plugin based off of [Gatsby's conventions for naming plugins](https://www.gatsbyjs.com/docs/naming-a-plugin/).
-
-## 🧐 What's inside?
-
-This starter generates the [files Gatsby looks for in plugins](https://www.gatsbyjs.com/docs/files-gatsby-looks-for-in-a-plugin/).
+Your hosting provider, might need a different file like headers.json, but it is still the same idea.
 
 ```text
-/my-plugin
-├── .gitignore
-├── gatsby-browser.js
-├── gatsby-node.js
-├── gatsby-ssr.js
-├── index.js
-├── LICENSE
-├── package.json
-└── README.md
+// In static directory
+/*
+    X-Frame-Options: DENY
+    X-Content-Type-Options: nosniff
+    Referrer-Policy: no-referrer
+    X-XSS-Protection: 1; mode=block
+    Strict-Transport-Security: max-age=31536000
+    Permission-Policy: accelerometer=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), sync-xhr=(), usb=()
+    Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-DhcnhD3khTMePgXw' 'strict-dynamic' https://www.google-analytics.com/analytics.js; style-src 'self'; img-src 'self' *.example.com https://www.google-analytics.com/collect; connect-src 'self' *.example.com; font-src 'self'; object-src 'none'; media-src 'none'; frame-src 'none'; child-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; worker-src 'none'; manifest-src 'self'; prefetch-src 'self'; navigate-to 'self';
 ```
-
-- **`.gitignore`**: This file tells git which files it should not track / not maintain a version history for.
-- **`gatsby-browser.js`**: This file is where Gatsby expects to find any usage of the [Gatsby browser APIs](https://www.gatsbyjs.com/docs/browser-apis/) (if any). These allow customization/extension of default Gatsby settings affecting the browser.
-- **`gatsby-node.js`**: This file is where Gatsby expects to find any usage of the [Gatsby Node APIs](https://www.gatsbyjs.com/docs/node-apis/) (if any). These allow customization/extension of default Gatsby settings affecting pieces of the site build process.
-- **`gatsby-ssr.js`**: This file is where Gatsby expects to find any usage of the [Gatsby server-side rendering APIs](https://www.gatsbyjs.com/docs/ssr-apis/) (if any). These allow customization of default Gatsby settings affecting server-side rendering.
-- **`index.js`**: A file that will be loaded by default when the plugin is [required by another application](https://docs.npmjs.com/creating-node-js-modules#create-the-file-that-will-be-loaded-when-your-module-is-required-by-another-application0). You can adjust what file is used by updating the `main` field of the `package.json`.
-- **`LICENSE`**: This plugin starter is licensed under the 0BSD license. This means that you can see this file as a placeholder and replace it with your own license.
-- **`package.json`**: A manifest file for Node.js projects, which includes things like metadata (the plugin's name, author, etc). This manifest is how npm knows which packages to install for your project.
-- **`README.md`**: A text file containing useful reference information about your plugin.
-
-## 🎓 Learning Gatsby
-
-If you're looking for more guidance on plugins, how they work, or what their role is in the Gatsby ecosystem, check out some of these resources:
-
-- The [Creating Plugins](https://www.gatsbyjs.com/docs/creating-plugins/) section of the docs has information on authoring and maintaining plugins yourself.
-- The conceptual guide on [Plugins, Themes, and Starters](https://www.gatsbyjs.com/docs/plugins-themes-and-starters/) compares and contrasts plugins with other pieces of the Gatsby ecosystem. It can also help you [decide what to choose between a plugin, starter, or theme](https://www.gatsbyjs.com/docs/plugins-themes-and-starters/#deciding-which-to-use).
-- The [Gatsby plugin library](https://www.gatsbyjs.com/plugins/) has over 1750 official as well as community developed plugins that can get you up and running faster and borrow ideas from.
