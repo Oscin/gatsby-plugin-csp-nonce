@@ -78,7 +78,7 @@ function updateComponents( array, type, nonce, replace ) {
             { nonce: nonce }
         );
 
-        console.log(`Success: Added nonce '${nonce}' to component with key: '${component.key}'`);
+        //console.log(`Success: Added nonce '${nonce}' to component with key: '${component.key}'`);
 
         // add the cloned component to the array of the failed ones
         // together they will form an array without duplicates
