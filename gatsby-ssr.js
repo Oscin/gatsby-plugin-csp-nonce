@@ -47,7 +47,7 @@ exports.onPreRenderHTML = (
     }
 
     // update the components
-    updateComponents( getHeadComponents(), "script", nonce, replaceHeadComponent, enableLogs )
+    updateComponents( getHeadComponents(), "script", nonce, replaceHeadComponents , enableLogs )
     updateComponents( getPreBodyComponents(), "script", nonce, replacePreBodyComponents, enableLogs )
     updateComponents( getPostBodyComponents(), "script", nonce, replacePostBodyComponents, enableLogs )
     updateComponents( getHeadComponents(), "style", nonce, replaceHeadComponents, enableLogs )
