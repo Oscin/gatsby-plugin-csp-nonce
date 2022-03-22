@@ -32,6 +32,7 @@ exports.onPreRenderHTML = (
 
     const {
         disableOnDev = true,
+        enableLogs = true,
         nonce = "DhcnhD3khTMePgXw",
     } = userPluginOptions;
 
@@ -40,15 +41,18 @@ exports.onPreRenderHTML = (
         return;
     }
 
-    console.log(`Adding nonce '${nonce}' in file: '${pathname}'`);
+    // show logs if enabled
+    if ( enableLogs ) {
+        console.log(`Adding nonce '${nonce}' in file: '${pathname}'`);
+    }
 
     // update the components
-    updateComponents( getHeadComponents(), "script", nonce, replaceHeadComponents )
-    updateComponents( getPreBodyComponents(), "script", nonce, replacePreBodyComponents )
-    updateComponents( getPostBodyComponents(), "script", nonce, replacePostBodyComponents )
-    updateComponents( getHeadComponents(), "style", nonce, replaceHeadComponents )
-    updateComponents( getPreBodyComponents(), "style", nonce, replacePreBodyComponents )
-    updateComponents( getPostBodyComponents(), "style", nonce, replacePostBodyComponents )
+    updateComponents( getHeadComponents(), "script", nonce, replaceHeadComponent, enableLogs )
+    updateComponents( getPreBodyComponents(), "script", nonce, replacePreBodyComponents, enableLogs )
+    updateComponents( getPostBodyComponents(), "script", nonce, replacePostBodyComponents, enableLogs )
+    updateComponents( getHeadComponents(), "style", nonce, replaceHeadComponents, enableLogs )
+    updateComponents( getPreBodyComponents(), "style", nonce, replacePreBodyComponents, enableLogs )
+    updateComponents( getPostBodyComponents(), "style", nonce, replacePostBodyComponents, enableLogs )
 }
 
 /**
@@ -58,7 +62,7 @@ exports.onPreRenderHTML = (
  * @param nonce
  * @param replace
  */
-function updateComponents( array, type, nonce, replace ) {
+function updateComponents( array, type, nonce, replace, enableLogs ) {
 
     // divide all components in two arrays: one with meets criteria and one which doesn't
     let [pass, remaining] = partitionBy( array, (element) => {
@@ -78,7 +82,10 @@ function updateComponents( array, type, nonce, replace ) {
             { nonce: nonce }
         );
 
-        //console.log(`Success: Added nonce '${nonce}' to component with key: '${component.key}'`);
+        // show logs if enabled
+        if ( enableLogs ) {
+            console.log(`Success: Added nonce '${nonce}' to component with key: '${component.key}'`);
+        }
 
         // add the cloned component to the array of the failed ones
         // together they will form an array without duplicates
