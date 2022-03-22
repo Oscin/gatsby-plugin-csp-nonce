@@ -41,9 +41,9 @@ module.exports = {
 };
 ```
 
-This will add the plugin and add `nonce="nonce-DhcnhD3khTMePgXw"` to your scripts and styles. By default the plugin is only visible in production mode (`gatsby build`).
+This will add the plugin and add `nonce="nonce-DhcnhD3khTMePgXw"` to your scripts and styles. By default the plugin is only visible in production mode (`gatsby build`). Logs are disabled by default to prevent flooding the console.
 
-To add a custom nonce or to see the nonce in development mode (`gatsby develop`), you can use the settings below.
+To add a custom nonce, add logs in the console or to see the nonce in development mode (`gatsby develop`), you can use the settings below.
 
 ```javascript
 // In your gatsby-config.js
@@ -53,6 +53,7 @@ module.exports = {
       resolve: `gatsby-plugin-csp-nonce`,
       options: {
           disableOnDev: false,
+          enableLogs: false,
           nonce: 'my-custom-nonce',
       },
     },
