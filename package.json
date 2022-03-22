@@ -1,6 +1,6 @@
 {
   "name": "gatsby-plugin-csp-nonce",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Generate fixed nonces for scripts in Gatsby and make them available for the headers.",
   "main": "index.js",
   "scripts": {
